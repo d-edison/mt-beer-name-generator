@@ -21,16 +21,32 @@ ui <- fluidPage(
     ),
     actionButton("go", "Generate Name", width = "100%"),
     tags$br(),
-    h2(textOutput("beer_name"))
+    h2(textOutput("beer_name")),
+    tags$br(),
+    downloadButton("fl", "Export All Unique Names", style = "width:100%;")
 )
 
 # Server ------------------------------------------------------------------
 
 server <- function(input, output) {
     bn <- eventReactive(input$go, {
-        sample(preds[[as.numeric(input$temp)]], 1)
+        preds[[as.numeric(input$temp)]]
     })
-    output$beer_name <- renderText(bn())
+    nm <- eventReactive(input$go, {
+        paste0("Outrageous-", input$temp, ".txt")
+    })
+    output$beer_name <- renderText(sample(bn(), 1))
+    output$fl <- downloadHandler(
+        filename = function() {
+            paste0("Outrageous-", input$temp, ".csv")
+        },
+        content = function(file) {
+            readr::write_csv(
+                tibble::tibble(`Beer Name` = sort(preds[[as.numeric(input$temp)]])), 
+                file
+            )
+        }
+    )
 }
 
 # Run App -----------------------------------------------------------------
